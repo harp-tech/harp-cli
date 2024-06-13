@@ -20,6 +20,11 @@ internal class Program
         ) { IsRequired = true };
         firmwarePath.ArgumentHelpName = nameof(firmwarePath);
 
+        var forceUpdate = new Option<bool>(
+            name: "--force",
+            description: "Indicates whether to force a firmware update on the device regardless of compatibility."
+        );
+
         var listCommand = new Command("list", description: "");
         listCommand.SetHandler(() =>
         {
@@ -30,12 +35,13 @@ internal class Program
         var updateCommand = new Command("update", description: "");
         updateCommand.AddOption(portName);
         updateCommand.AddOption(firmwarePath);
-        updateCommand.SetHandler(async (portName, firmwarePath) =>
+        updateCommand.AddOption(forceUpdate);
+        updateCommand.SetHandler(async (portName, firmwarePath, forceUpdate) =>
         {
             var firmware = DeviceFirmware.FromFile(firmwarePath.FullName);
             Console.WriteLine($"{firmware.Metadata}");
-            await Bootloader.UpdateFirmwareAsync(portName, firmware);
-        }, portName, firmwarePath);
+            await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate);
+        }, portName, firmwarePath, forceUpdate);
 
         var rootCommand = new RootCommand("Tool for inspecting, updating and interfacing with Harp devices.");
         rootCommand.AddOption(portName);
