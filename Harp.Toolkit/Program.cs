@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.IO.Ports;
 using Bonsai.Harp;
 
 namespace Harp.Toolkit;
@@ -13,8 +14,16 @@ internal class Program
         ) { IsRequired = true };
         portName.ArgumentHelpName = nameof(portName);
 
+        var listCommand = new Command("list", description: "");
+        listCommand.SetHandler(() =>
+        {
+            var portNames = SerialPort.GetPortNames();
+            Console.WriteLine($"PortNames: [{string.Join(", ", portNames)}]");
+        });
+
         var rootCommand = new RootCommand("Tool for inspecting, updating and interfacing with Harp devices.");
         rootCommand.AddOption(portName);
+        rootCommand.AddCommand(listCommand);
         rootCommand.SetHandler(async (portName) =>
         {
             using var device = new AsyncDevice(portName);
