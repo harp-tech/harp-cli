@@ -41,8 +41,12 @@ internal class Program
             var firmware = DeviceFirmware.FromFile(firmwarePath.FullName);
             Console.WriteLine($"{firmware.Metadata}");
             ProgressBar.Write(0);
-            var progress = new Progress<int>(ProgressBar.Update);
-            await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
+            try
+            {
+                var progress = new Progress<int>(ProgressBar.Update);
+                await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
+            }
+            finally { Console.WriteLine(); }
         }, portName, firmwarePath, forceUpdate);
 
         var rootCommand = new RootCommand("Tool for inspecting, updating and interfacing with Harp devices.");
