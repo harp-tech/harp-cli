@@ -14,6 +14,17 @@ internal class Program
         ) { IsRequired = true };
         portName.ArgumentHelpName = nameof(portName);
 
+        var firmwarePath = new Option<FileInfo>(
+            name: "--path",
+            description: "Specifies the path of the firmware file to write to the device."
+        ) { IsRequired = true };
+        firmwarePath.ArgumentHelpName = nameof(firmwarePath);
+
+        var forceUpdate = new Option<bool>(
+            name: "--force",
+            description: "Indicates whether to force a firmware update on the device regardless of compatibility."
+        );
+
         var listCommand = new Command("list", description: "");
         listCommand.SetHandler(() =>
         {
@@ -21,9 +32,27 @@ internal class Program
             Console.WriteLine($"PortNames: [{string.Join(", ", portNames)}]");
         });
 
+        var updateCommand = new Command("update", description: "");
+        updateCommand.AddOption(portName);
+        updateCommand.AddOption(firmwarePath);
+        updateCommand.AddOption(forceUpdate);
+        updateCommand.SetHandler(async (portName, firmwarePath, forceUpdate) =>
+        {
+            var firmware = DeviceFirmware.FromFile(firmwarePath.FullName);
+            Console.WriteLine($"{firmware.Metadata}");
+            ProgressBar.Write(0);
+            try
+            {
+                var progress = new Progress<int>(ProgressBar.Update);
+                await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
+            }
+            finally { Console.WriteLine(); }
+        }, portName, firmwarePath, forceUpdate);
+
         var rootCommand = new RootCommand("Tool for inspecting, updating and interfacing with Harp devices.");
         rootCommand.AddOption(portName);
         rootCommand.AddCommand(listCommand);
+        rootCommand.AddCommand(updateCommand);
         rootCommand.SetHandler(async (portName) =>
         {
             using var device = new AsyncDevice(portName);
