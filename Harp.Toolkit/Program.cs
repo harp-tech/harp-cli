@@ -30,14 +30,14 @@ internal class Program
             description: "Indicates whether to force a firmware update on the device regardless of compatibility."
         );
 
-        var listCommand = new Command("list", description: "");
+        var listCommand = new Command("list", description: "List all available system serial ports.");
         listCommand.SetHandler(() =>
         {
             var portNames = SerialPort.GetPortNames();
             Console.WriteLine($"PortNames: [{string.Join(", ", portNames)}]");
         });
 
-        var updateCommand = new Command("update", description: "");
+        var updateCommand = new Command("update", description: "Update the device firmware from a local HEX file.");
         updateCommand.AddOption(portName);
         updateCommand.AddOption(firmwarePath);
         updateCommand.AddOption(forceUpdate);
