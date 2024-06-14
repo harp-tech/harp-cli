@@ -14,6 +14,11 @@ internal class Program
         ) { IsRequired = true };
         portName.ArgumentHelpName = nameof(portName);
 
+        var portTimeout = new Option<int?>(
+            name: "--timeout",
+            description: "Specifies an optional timeout to receive a response from the device."
+        ) { ArgumentHelpName = "milliseconds" };
+
         var firmwarePath = new Option<FileInfo>(
             name: "--path",
             description: "Specifies the path of the firmware file to write to the device."
@@ -51,12 +56,13 @@ internal class Program
 
         var rootCommand = new RootCommand("Tool for inspecting, updating and interfacing with Harp devices.");
         rootCommand.AddOption(portName);
+        rootCommand.AddOption(portTimeout);
         rootCommand.AddCommand(listCommand);
         rootCommand.AddCommand(updateCommand);
-        rootCommand.SetHandler(async (portName) =>
+        rootCommand.SetHandler(async (portName, portTimeout) =>
         {
             using var device = new AsyncDevice(portName);
-            var whoAmI = await device.ReadWhoAmIAsync();
+            var whoAmI = await device.ReadWhoAmIAsync().WithTimeout(portTimeout);
             var hardwareVersion = await device.ReadHardwareVersionAsync();
             var firmwareVersion = await device.ReadFirmwareVersionAsync();
             var timestamp = await device.ReadTimestampSecondsAsync();
@@ -68,7 +74,7 @@ internal class Program
             Console.WriteLine($"Fw: {firmwareVersion.Major}.{firmwareVersion.Minor}");
             Console.WriteLine($"Timestamp (s): {timestamp}");
             Console.WriteLine();
-        }, portName);
+        }, portName, portTimeout);
         await rootCommand.InvokeAsync(args);
     }
 }
